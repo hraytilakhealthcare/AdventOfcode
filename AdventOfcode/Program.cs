@@ -21,12 +21,30 @@ internal static class AdventOfCodeRunner
             .TrimEnd('\n'); //Remove the last \n that is usually outside the scope of the puzzle
 
         //TODO: Dynamic dispatch for the adequate function
-        Puzzle1(fileContent);
+        Puzzle1(fileContent, Extra);
     }
 
-    private static void Puzzle1(string fileContent)
+    private static void Puzzle1(string fileContent, bool extra)
     {
-        Log(fileContent.Split("\n\n").Select(Calories).Max().ToString());
+        List<int> elfs = fileContent.Split("\n\n").Select(Calories).ToList();
+        if (extra)
+            Log(
+                elfs.Select( //Not ideal because of the elf enumeration but ¯\_(ツ)_/¯
+                        _ => elfs.Pop(elfs.Max())
+                    )
+                    .Take(3)
+                    .Sum()
+                    .ToString()
+            );
+        else
+            Log(elfs.Max().ToString());
+    }
+
+    private static T Pop<T>(this ICollection<T> list, T element)
+    {
+        //TODO: assert lib
+        list.Remove(element);
+        return element;
     }
 
     private static int Calories(string elfInventory) => elfInventory.Split("\n").Select(i => int.Parse(i)).Sum();
