@@ -1,5 +1,6 @@
 ﻿using AdventOfcode;
 using Mono.Options;
+using NUnit.Framework;
 
 
 internal static class AdventOfCodeRunner
@@ -15,12 +16,15 @@ internal static class AdventOfCodeRunner
         commandLineOptions.Parse(args);
         Utils.Log($"Running advent of code for day:{Day}");
 
-        string fileContent = File.ReadAllText($"/home/ahub/src/private/AdventOfcode/input_{Day}")
+        string path = $"/home/ahub/src/private/AdventOfcode/input_{Day}";
+        Assert.IsTrue(File.Exists(path), $"File not found {path}");
+        string fileContent = File.ReadAllText(path)
             .TrimEnd('\n'); //Remove the last \n that is usually outside the scope of the puzzle
 
-        //TODO: asserts
-        Type? type = Type.GetType($"AdventOfcode.Puzzle{Day}");
-        PuzzleSolver? puzzleSolver = Activator.CreateInstance(type, fileContent) as PuzzleSolver;
+        string typeName = $"AdventOfcode.Puzzle{Day}";
+        Type type = Type.GetType(typeName) ?? throw new ArgumentNullException($"Couldn't find type: {typeName}");
+        PuzzleSolver puzzleSolver = Activator.CreateInstance(type, fileContent) as PuzzleSolver ??
+                                    throw new InvalidOperationException($"Couldn't instantiate type: {typeName}");
         puzzleSolver.Compute();
         Utils.Log(puzzleSolver.ToString());
     }
