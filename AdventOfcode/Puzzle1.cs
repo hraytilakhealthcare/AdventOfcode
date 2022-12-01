@@ -1,3 +1,5 @@
+using NUnit.Framework;
+
 namespace AdventOfcode;
 
 // ReSharper disable once UnusedType.Global
@@ -25,6 +27,14 @@ public class Puzzle1 : PuzzleSolver
             .ToString();
     }
 
-
     private static int Calories(string elfInventory) => elfInventory.Split("\n").Select(int.Parse).Sum();
+
+    public static class Test
+    {
+        [Test]
+        public static void PuzzleTest()
+        {
+            Assert.AreEqual(3, int.Parse("3"));
+        }
+    }
 }
