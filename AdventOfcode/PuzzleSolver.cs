@@ -32,7 +32,7 @@ public abstract class PuzzleSolver
         {
             return (step1.Invoke(FileContent), stopwatch.Elapsed);
         }
-        catch (Exception e)
+        catch (Exception)
         {
             return ("Not implemented", stopwatch.Elapsed);
         }

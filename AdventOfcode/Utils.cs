@@ -9,5 +9,6 @@ public static class Utils
         return element;
     }
 
+    public static void Log(int val) => Log(val.ToString());
     public static void Log(string text) => Console.WriteLine(text);
 }
