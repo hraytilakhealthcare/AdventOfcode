@@ -7,10 +7,12 @@ public class Puzzle2 : PuzzleSolver
 {
     private enum Result
     {
-        Win,
-        Loose,
-        Draw
+        Win = 3,
+        Loose = 1,
+        Draw = 2
     }
+    // 12740 -> Too high
+    // 9808 -> Too low
 
 
     private static readonly Dictionary<Result, int> ResultScores = new()
@@ -47,7 +49,9 @@ public class Puzzle2 : PuzzleSolver
 
     protected override string Step2(string fileContent)
     {
-        throw new NotImplementedException();
+        return fileContent.Split("\n").Select(
+            line => ComputeScore2(ParseLine(line))
+        ).Sum().ToString();
     }
 
     private static int ComputeScore((char, char) move)
@@ -57,13 +61,49 @@ public class Puzzle2 : PuzzleSolver
         return ResultScores[ComputeResult(hisMove, myMove)] + myMove;
     }
 
+    private static int ComputeScore2((char, char) move)
+    {
+        int hisMove = ShapeScores[move.Item1];
+        Result myTargetResult = (Result)(ShapeScores[move.Item2]);
+        return myTargetResult switch
+        {
+            Result.Win => ResultScores[Result.Win] + FindMove(Result.Win, hisMove),
+            Result.Loose => ResultScores[Result.Loose] + FindMove(Result.Loose, hisMove),
+            Result.Draw => ResultScores[Result.Draw] + hisMove,
+            _ => throw new ArgumentOutOfRangeException()
+        };
+    }
+
+    //Got lazy with %
+    private static int FindMove(Result target, int hisMove)
+    {
+        if (target == Result.Win)
+            return hisMove switch
+            {
+                1 => 2,
+                2 => 3,
+                3 => 1,
+                _ => throw new Exception()
+            };
+        if (target == Result.Loose)
+            return hisMove switch
+            {
+                1 => 3,
+                2 => 1,
+                3 => 2,
+                _ => throw new Exception()
+            };
+        return hisMove;
+    }
+
     private static Result ComputeResult(int hisMove, int myMove)
     {
         if (myMove == hisMove)
             return Result.Draw;
 
-        if ((hisMove + 1) % MaxVal == myMove % MaxVal)
+        if ((hisMove == 1 && myMove == 2) || (hisMove == 2 && myMove == 3) || (hisMove == 3 && myMove == 1))
             return Result.Win;
+
         return Result.Loose;
     }
 
@@ -75,6 +115,21 @@ public class Puzzle2 : PuzzleSolver
 
     public static class Test2
     {
+        [Test]
+        public static void ResultTest2()
+        {
+            const string guide = @"A Y
+B X
+C Z";
+            int finalScore = guide.Split("\n").Select(
+                line => ComputeScore2(ParseLine(line))
+            ).Sum();
+            Assert.AreEqual(finalScore, 12);
+            Assert.AreEqual(4, ComputeScore2(('A', 'Y')));
+            Assert.AreEqual(1, ComputeScore2(('B', 'X')));
+            Assert.AreEqual(7, ComputeScore2(('C', 'Z')));
+        }
+
         [Test]
         public static void ResultTest()
         {
