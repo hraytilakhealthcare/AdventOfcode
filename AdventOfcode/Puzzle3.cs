@@ -19,6 +19,29 @@ public class Puzzle3 : PuzzleSolver
             .ToString();
     }
 
+    protected override string Step2(string fileContent)
+    {
+        string[] lines = fileContent.Split();
+        Assert.IsTrue(lines.Length % 3 == 0);
+        return AllTriplets(lines).Select(triplet => LetterValue(FindCommonLetter(triplet))).Sum().ToString();
+    }
+
+    private static char FindCommonLetter(Tuple<string, string, string> triplet)
+    {
+        HashSet<char> h1 = new(triplet.Item1.ToCharArray());
+        HashSet<char> h2 = new(triplet.Item2.ToCharArray());
+        HashSet<char> h3 = new(triplet.Item3.ToCharArray());
+        h1.IntersectWith(h2);
+        h1.IntersectWith(h3);
+        return new List<char>(h1)[0];
+    }
+
+    private static IEnumerable<Tuple<string, string, string>> AllTriplets(IReadOnlyList<string> lines)
+    {
+        for (int i = 0; i < lines.Count; i += 3)
+            yield return new Tuple<string, string, string>(lines[i + 0], lines[i + 1], lines[i + 2]);
+    }
+
     private static char MisplacedItem(string backpack)
     {
         char[] charArray = backpack.ToCharArray();
@@ -26,11 +49,6 @@ public class Puzzle3 : PuzzleSolver
         HashSet<char> right = new(charArray.Skip(backpack.Length / 2).Take(backpack.Length / 2));
         left.IntersectWith(right);
         return new List<char>(left)[0];
-    }
-
-    protected override string Step2(string fileContent)
-    {
-        throw new Exception();
     }
 
     private static int LetterValue(char letter)
@@ -50,6 +68,7 @@ public class Puzzle3 : PuzzleSolver
             Assert.AreEqual(1, LetterValue('a'));
             Assert.AreEqual(27, LetterValue('A'));
         }
+
         [Test]
         public static void PuzzleTest()
         {
