@@ -14,19 +14,36 @@ public class Puzzle4 : PuzzleSolver
         return fileContent.Split("\n")
             .Select(ParseRanges)
             .ToList()
+            .FindAll(Contains)
+            .ToList()
+            .Count
+            .ToString();
+    }
+
+    protected override string Step2(string fileContent)
+    {
+        return fileContent.Split("\n")
+            .Select(ParseRanges)
+            .ToList()
             .FindAll(Overlaps)
             .ToList()
             .Count
             .ToString();
     }
 
-    private bool Overlaps(Tuple<Range, Range> pairRanges)
+    private static bool Overlaps(Tuple<Range, Range> obj)
+    {
+        return obj.Item1.Overlaps(obj.Item2);
+    }
+
+
+    private static bool Contains(Tuple<Range, Range> pairRanges)
     {
         return pairRanges.Item1.Contains(pairRanges.Item2)
                || pairRanges.Item2.Contains(pairRanges.Item1);
     }
 
-    private Tuple<Range, Range> ParseRanges(string line)
+    private static Tuple<Range, Range> ParseRanges(string line)
     {
         string[] strings = line.Split(",");
         Assert.AreEqual(2, strings.Length);
@@ -56,13 +73,13 @@ public class Puzzle4 : PuzzleSolver
 
         public bool Contains(Range other)
         {
-            return other.Min >= this.Min && other.Max <= this.Max;
+            return other.Min >= Min && other.Max <= Max;
         }
-    }
 
-    protected override string Step2(string fileContent)
-    {
-        throw new Exception();
+        public bool Overlaps(Range other)
+        {
+            return other.Min <= Max && other.Max >= Min;
+        }
     }
 
 
