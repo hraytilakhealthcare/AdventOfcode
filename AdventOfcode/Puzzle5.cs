@@ -60,12 +60,34 @@ public class Puzzle5 : PuzzleSolver
         string ordersString = strings[1];
 
         foreach (Tuple<int, int, int> orders in ordersString.Split("\n").Select(ParseOrder))
-        {
             ExecuteMove(orders.Item1, orders.Item2, orders.Item3, stacks);
-        }
 
         return new string(stacks.Select(s => s.Peek()).ToArray());
     }
+
+    protected override string Step2(string fileContent)
+    {
+        string[] strings = fileContent.Split("\n\n");
+        string crateDesc = strings[0];
+        List<Stack<char>> stacks = ParseCrateStacks(crateDesc);
+        string ordersString = strings[1];
+
+        foreach (Tuple<int, int, int> orders in ordersString.Split("\n").Select(ParseOrder))
+            ExecuteMove2(orders.Item1, orders.Item2, orders.Item3, stacks);
+
+        return new string(stacks.Select(s => s.Peek()).ToArray());
+    }
+
+    //SO fucking lazy :)
+    private static void ExecuteMove2(int crateCount, int from, int to, List<Stack<char>> stacks)
+    {
+        Stack<char> tmpStack = new Stack<char>();
+        for (int i = 0; i < crateCount; i++)
+            tmpStack.Push(stacks[from].Pop());
+        for (int i = 0; i < crateCount; i++)
+            stacks[to].Push(tmpStack.Pop());
+    }
+
 
     private static void ExecuteMove(int crateCount, int from, int to, List<Stack<char>> stacks)
     {
@@ -84,12 +106,6 @@ public class Puzzle5 : PuzzleSolver
             int.Parse(strings[5]) - 1
         );
     }
-
-    protected override string Step2(string fileContent)
-    {
-        throw new Exception();
-    }
-
 
     public static class Test
     {
