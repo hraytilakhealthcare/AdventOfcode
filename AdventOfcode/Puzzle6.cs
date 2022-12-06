@@ -16,6 +16,11 @@ public class Puzzle6 : PuzzleSolver
         return FindStartOfPacketIndex(fileContent, 4).ToString();
     }
 
+    protected override string Step2(string fileContent)
+    {
+        return FindStartOfPacketIndex(fileContent, 14).ToString();
+    }
+
     private static int FindStartOfPacketIndex(string signal, int markerLength)
     {
         HashSet<char> uniqueChars = new();
@@ -30,17 +35,17 @@ public class Puzzle6 : PuzzleSolver
         throw new Exception("That shouldn't happen with aoc input");
     }
 
-    protected override string Step2(string fileContent)
-    {
-        throw new Exception();
-    }
-
     public static class Test
     {
         [Test]
         public static void PuzzleTest()
         {
             Assert.AreEqual(5, FindStartOfPacketIndex("bvwbjplbgvbhsrlpgdmjqwftvncz", 4));
+
+            Assert.AreEqual(19, FindStartOfPacketIndex("mjqjpqmgbljsphdztnvjfqwrcgsmlb", 14));
+            Assert.AreEqual(23, FindStartOfPacketIndex("nppdvjthqldpwncqszvftbrmjlhg", 14));
+            Assert.AreEqual(29, FindStartOfPacketIndex("nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg", 14));
+            Assert.AreEqual(26, FindStartOfPacketIndex("zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw", 14));
         }
     }
 }
