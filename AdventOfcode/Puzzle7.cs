@@ -20,8 +20,14 @@ public class Puzzle7 : PuzzleSolver
 
     protected override string Step2(string fileContent)
     {
-        return "-1";
-        throw new Exception();
+        const int totalDiskSpace = 70000000;
+        const int targetFreeSpace = 30000000;
+        Dir root = BuildTree(fileContent);
+        int usedSize = root.GetSize();
+        Assert.IsTrue(usedSize <= totalDiskSpace);
+        int currentFreeSpace = totalDiskSpace - usedSize;
+        int toFree = targetFreeSpace - currentFreeSpace;
+        return root.AllDirs().Where(dir => dir.GetSize() > toFree).Select(dir => dir.GetSize()).Min().ToString();
     }
 
     private static Dir BuildTree(string fileContent)
@@ -85,8 +91,13 @@ public class Puzzle7 : PuzzleSolver
 
         public int GetSize()
         {
-            return AllDirs().Select(d => d.GetSize()).Sum()
-                   + Files.Values.Select(f => f.size).Sum();
+            return AllFiles().Select(file => file.size).Sum()
+                   + Files.Values.Select(file => file.size).Sum();
+        }
+
+        private IEnumerable<File> AllFiles()
+        {
+            return AllDirs().SelectMany(dir => dir.Files.Values);
         }
 
         public IEnumerable<Dir> AllDirs()
@@ -126,7 +137,31 @@ public class Puzzle7 : PuzzleSolver
         [Test]
         public static void PuzzleTest()
         {
-            Assert.AreEqual(3, int.Parse("3"));
+            const string sample = @"$ cd /
+$ ls
+dir a
+14848514 b.txt
+8504156 c.dat
+dir d
+$ cd a
+$ ls
+dir e
+29116 f
+2557 g
+62596 h.lst
+$ cd e
+$ ls
+584 i
+$ cd ..
+$ cd ..
+$ cd d
+$ ls
+4060174 j
+8033020 d.log
+5626152 d.ext
+7214296 k";
+            Dir root = BuildTree(sample);
+            Assert.AreEqual(48381165, root.GetSize());
         }
     }
 }
