@@ -16,6 +16,11 @@ public class Puzzle8 : PuzzleSolver
         return ParseMap(fileContent).VisibleTreesCount().ToString();
     }
 
+    protected override string Step2(string fileContent)
+    {
+        return ParseMap(fileContent).AllScenicScores().Max().ToString();
+    }
+
     private static Map ParseMap(string fileContent)
     {
         Map map = new();
@@ -31,11 +36,6 @@ public class Puzzle8 : PuzzleSolver
         }
 
         return map;
-    }
-
-    protected override string Step2(string fileContent)
-    {
-        throw new Exception();
     }
 
     private readonly struct Coords
@@ -69,6 +69,33 @@ public class Puzzle8 : PuzzleSolver
             return forest.Keys.Where(IsVisible).ToList().Count;
         }
 
+        public IEnumerable<int> AllScenicScores() => forest.Keys.Select(ComputeScenicScore);
+
+        public int ComputeScenicScore(Coords tree)
+        {
+            int westView = SeenTrees(tree, West);
+            int northView = SeenTrees(tree, North);
+            int eastView = SeenTrees(tree, East);
+            int southView = SeenTrees(tree, South);
+            return westView
+                   * northView
+                   * eastView
+                   * southView;
+        }
+
+        private int SeenTrees(Coords tree, Func<Coords, IEnumerable<Coords>> direction)
+        {
+            int height = forest[tree];
+            int treeSeen = 0;
+            foreach (Coords coords in direction.Invoke(tree))
+            {
+                treeSeen++;
+                if (forest[coords] >= height)
+                    return treeSeen;
+            }
+
+            return treeSeen;
+        }
 
         private bool IsVisible(Coords coords)
         {
@@ -96,9 +123,9 @@ public class Puzzle8 : PuzzleSolver
             return isVisible;
         }
 
-        private IEnumerable<Coords> West(Coords coords)
+        private static IEnumerable<Coords> West(Coords coords)
         {
-            for (int i = 0; i < coords.X; i++)
+            for (int i = coords.X - 1; i >= 0; i--)
                 yield return new Coords(i, coords.Y);
         }
 
@@ -108,9 +135,9 @@ public class Puzzle8 : PuzzleSolver
                 yield return new Coords(x, coords.Y);
         }
 
-        private IEnumerable<Coords> North(Coords coords)
+        private static IEnumerable<Coords> North(Coords coords)
         {
-            for (int y = 0; y < coords.Y; y++)
+            for (int y = coords.Y - 1; y >= 0; y--)
                 yield return new Coords(coords.X, y);
         }
 
@@ -143,6 +170,7 @@ public class Puzzle8 : PuzzleSolver
 35390";
             Map map = ParseMap(sample);
             Assert.AreEqual(21, map.VisibleTreesCount());
+            Assert.AreEqual(4, map.ComputeScenicScore(new Coords(2, 1)));
         }
     }
 }
