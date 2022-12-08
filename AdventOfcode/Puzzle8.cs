@@ -13,13 +13,12 @@ public class Puzzle8 : PuzzleSolver
 
     protected override string Step1(string fileContent)
     {
-        Map map = ParseMap(fileContent);
-        return string.Empty;
+        return ParseMap(fileContent).VisibleTreesCount().ToString();
     }
 
     private static Map ParseMap(string fileContent)
     {
-        Map map = new Map();
+        Map map = new();
         foreach ((string content, int index) treeLine in fileContent.Split("\n")
                      .Select((line, lIndex) => (line, lIndex)))
         {
@@ -39,82 +38,95 @@ public class Puzzle8 : PuzzleSolver
         throw new Exception();
     }
 
-    private struct Coords
+    private readonly struct Coords
     {
-        public readonly int x;
-        public readonly int y;
+        public readonly int X;
+        public readonly int Y;
 
         public Coords(int x, int y)
         {
-            this.x = x;
-            this.y = y;
+            X = x;
+            Y = y;
         }
+
+        public override string ToString() => $"x:{X}, y:{Y}";
     }
 
     private class Map
     {
-        private readonly Dictionary<Coords, int> trees = new();
+        private readonly Dictionary<Coords, int> forest = new();
         private int maxX, maxY;
 
         public void AddTree(int treeHeight, int x, int y)
         {
-            trees.Add(new Coords(x, y), treeHeight);
+            forest.Add(new Coords(x, y), treeHeight);
             maxX = Math.Max(maxX, x + 1);
             maxY = Math.Max(maxY, y + 1);
         }
 
-        public int VisibleTrees()
+        public int VisibleTreesCount()
         {
-            return GenerateTreeLine(0, maxX).Select(CountVisibleTree).Sum()
-                   + GenerateTreeLine(maxX - 1, -1).Select(CountVisibleTree).Sum()
-                   + GenerateTreeColumn(0, maxY).Select(CountVisibleTree).Sum()
-                   + GenerateTreeColumn(maxY - 1, -1).Select(CountVisibleTree).Sum();
+            return forest.Keys.Where(IsVisible).ToList().Count;
         }
 
-        private int CountVisibleTree(IEnumerable<Coords> treeLine)
+
+        private bool IsVisible(Coords coords)
         {
-            int visibleTreeCount = 0;
-            int lastTree = -1;
-            foreach (int currentTree in treeLine.ToList().Select(coords => trees[coords]))
-            {
-                if (currentTree > lastTree)
-                {
-                    visibleTreeCount++;
-                }
+            if (IsOnBorder(coords))
+                return true;
 
-                lastTree = currentTree;
-            }
+            int height = forest[coords];
+            bool visibleWest = West(coords).All(
+                neighbor => height > forest[neighbor]
+            );
+            bool visibleEast = East(coords).All(
+                neighbor => height > forest[neighbor]
+            );
+            bool visibleSouth = South(coords).All(
+                neighbor => height > forest[neighbor]
+            );
+            bool visibleNorth = North(coords).All(
+                neighbor => height > forest[neighbor]
+            );
 
-            return visibleTreeCount;
+            bool isVisible = visibleWest
+                             || visibleEast
+                             || visibleSouth
+                             || visibleNorth;
+            return isVisible;
         }
 
-        private IEnumerable<IEnumerable<Coords>> GenerateTreeLine(int startX, int endX)
+        private IEnumerable<Coords> West(Coords coords)
         {
-            for (int y = 0; y < maxY; y++)
-            {
-                List<Coords> coordsList = new();
-                foreach (int x in Range(startX, endX))
-                    coordsList.Add(new Coords(x, y));
-                yield return coordsList;
-            }
+            for (int i = 0; i < coords.X; i++)
+                yield return new Coords(i, coords.Y);
         }
 
-        private IEnumerable<IEnumerable<Coords>> GenerateTreeColumn(int startY, int endY)
+        private IEnumerable<Coords> East(Coords coords)
         {
-            for (int x = 0; x < maxX; x++)
-            {
-                List<Coords> coordsList = new();
-                foreach (int y in Range(startY, endY))
-                    coordsList.Add(new Coords(x, y));
-                yield return coordsList;
-            }
+            for (int x = coords.X + 1; x < maxX; x++)
+                yield return new Coords(x, coords.Y);
         }
 
-        public static IEnumerable<int> Range(int from, int to)
+        private IEnumerable<Coords> North(Coords coords)
         {
-            int increment = from < to ? 1 : -1;
-            for (int i = from; i != to; i += increment)
-                yield return i;
+            for (int y = 0; y < coords.Y; y++)
+                yield return new Coords(coords.X, y);
+        }
+
+        private IEnumerable<Coords> South(Coords coords)
+        {
+            for (int y = coords.Y + 1; y < maxY; y++)
+                yield return new Coords(coords.X, y);
+        }
+
+
+        private bool IsOnBorder(Coords coords)
+        {
+            return coords.X == 0
+                   || coords.Y == 0
+                   || coords.X == maxX - 1
+                   || coords.Y == maxY - 1;
         }
     }
 
@@ -130,7 +142,7 @@ public class Puzzle8 : PuzzleSolver
 33549
 35390";
             Map map = ParseMap(sample);
-            Assert.AreEqual(21, map.VisibleTrees());
+            Assert.AreEqual(21, map.VisibleTreesCount());
         }
     }
 }
