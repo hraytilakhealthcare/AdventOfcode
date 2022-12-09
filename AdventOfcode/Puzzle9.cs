@@ -1,4 +1,4 @@
-using System.Xml.Schema;
+using System.Diagnostics;
 using NUnit.Framework;
 
 namespace AdventOfcode;
@@ -15,10 +15,10 @@ public class Puzzle9 : PuzzleSolver
     protected override string Step1(string fileContent)
     {
         Coords startPos = new(0, 0);
-        Rope rope = new(startPos);
+        Rope rope = new(startPos, 1);
 
         int tailMoves = new HashSet<Coords>(
-            fileContent.Split("\n").Select(ParseMove).SelectMany(move => rope.Walk(move.step, move.count))
+            fileContent.Split("\n").Select(ParseMove).SelectMany(move => rope.Head.Walk(move.step, move.count))
         )
         {
             startPos
@@ -28,7 +28,16 @@ public class Puzzle9 : PuzzleSolver
 
     protected override string Step2(string fileContent)
     {
-        throw new Exception();
+        Coords startPos = new(0, 0);
+        Rope rope = new(startPos, 9);
+
+        int tailMoves = new HashSet<Coords>(
+            fileContent.Split("\n").Select(ParseMove).SelectMany(move => rope.Head.Walk(move.step, move.count))
+        )
+        {
+            startPos
+        }.Count;
+        return tailMoves.ToString();
     }
 
     private static (Coords step, int count) ParseMove(string line)
@@ -46,43 +55,74 @@ public class Puzzle9 : PuzzleSolver
         return (step, count);
     }
 
-    private class Rope
+    private class Knot
     {
-        private Coords head;
+        private Coords coords;
+        private Knot? child;
+        private int X => coords.X;
+        private int Y => coords.Y;
 
-        private Coords tail;
-        // private readonly HashSet<Coords> visitedByTail = new();
-
-        public Rope(Coords start)
+        public Knot(Coords start)
         {
-            head = start.Clone();
-            tail = start.Clone();
+            coords = start.Clone();
+        }
+
+        public void Bind(Knot boundChild) => child = boundChild;
+
+        private bool IsChildAdjacent()
+        {
+            if (child == null)
+                return true;
+            return Math.Abs(X - child.X) <= 1
+                   && Math.Abs(Y - child.Y) <= 1;
         }
 
         public IEnumerable<Coords> Walk(Coords step, int count) =>
-            Enumerable.Repeat(step, count).Select(MoveHead);
+            Enumerable.Repeat(step, count).Select(Move);
 
-        private Coords MoveHead(Coords step)
+        private Coords Move(Coords step)
         {
-            head += step;
-            if (!IsAdjacent())
-                Catchup();
-            return tail;
+            coords += step;
+            return !IsChildAdjacent()
+                ? Catchup()
+                : TailMostCoords();
         }
 
-        private bool IsAdjacent() =>
-            Math.Abs(head.X - tail.X) <= 1
-            && Math.Abs(head.Y - tail.Y) <= 1;
+        private Coords TailMostCoords() =>
+            child?.TailMostCoords() ?? coords;
 
         //Moves tail one step towards head
-        private void Catchup()
+        private Coords Catchup()
         {
-            Coords distance = head - tail;
+            Debug.Assert(child != null, nameof(child) + " != null");
+            Coords distance = coords - child.coords;
             Coords step = new(Math.Sign(distance.X), Math.Sign(distance.Y));
-            tail += step;
+            return child.Move(step);
         }
 
-        public override string ToString() => $"H:{head} T:{tail}";
+        public override string ToString() => $"Knot:{coords}";
+    }
+
+    private class Rope
+    {
+        public readonly Knot Head;
+        private readonly Knot tail;
+
+        public Rope(Coords start, int knotCount)
+        {
+            Head = new Knot(start);
+            Knot previous = Head;
+            for (int i = 0; i < knotCount; i++)
+            {
+                Knot newKnot = new(start);
+                previous.Bind(newKnot);
+                previous = newKnot;
+            }
+
+            tail = previous;
+        }
+
+        public override string ToString() => $"H:{Head} T:{tail}";
     }
 
     private readonly struct Coords
@@ -109,6 +149,34 @@ public class Puzzle9 : PuzzleSolver
     public static class Test
     {
         [Test]
+        public static void PuzzleTest2()
+        {
+            const string sample = @"R 5
+U 8
+L 8
+D 3
+R 17
+D 10
+L 25
+U 20";
+            Coords startPos = new(0, 0);
+            Rope rope = new(startPos, 9);
+
+            int tailMoves = new HashSet<Coords>(
+                sample.Split("\n")
+                    .Select(ParseMove)
+                    .SelectMany(
+                        move => rope.Head.Walk(move.step, move.count)
+                    ).ToList()
+            )
+            {
+                startPos
+            }.Count;
+
+            Assert.AreEqual(36, tailMoves);
+        }
+
+        [Test]
         public static void PuzzleTest()
         {
             const string sample = @"R 4
@@ -120,10 +188,14 @@ D 1
 L 5
 R 2";
             Coords startPos = new(0, 0);
-            Rope rope = new(startPos);
+            Rope rope = new(startPos, 1);
 
             int tailMoves = new HashSet<Coords>(
-                sample.Split("\n").Select(ParseMove).SelectMany(move => rope.Walk(move.step, move.count))
+                sample.Split("\n")
+                    .Select(ParseMove)
+                    .SelectMany(
+                        move => rope.Head.Walk(move.step, move.count)
+                    ).ToList()
             )
             {
                 startPos
